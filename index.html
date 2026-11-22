@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>PLACAS</title>
+<link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#f5c400"><meta name="apple-mobile-web-app-capable" content="yes">
+<style>
+:root{--bg:#f6f6f2;--fg:#1f2328;--card:#fff;--ln:#d9d9d2;--y:#f5c400;--ok:#1a7f4b;--no:#b3261e;--mu:#6b6f76;color-scheme:light}
+@media(prefers-color-scheme:dark){:root{--bg:#16181b;--fg:#ececea;--card:#22252a;--ln:#3a3e44;--mu:#9aa0a8;--ok:#4cc38a;--no:#ff8a80;color-scheme:dark}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+header{position:sticky;top:0;z-index:5;background:var(--y);color:#1f2328;display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:4px solid #1f2328}
+header h1{font-size:18px;margin:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:.02em}
+header button{background:#1f2328;color:#f5c400;border:0;border-radius:6px;padding:8px 12px;font-weight:700;font-size:15px}
+main{max-width:720px;margin:0 auto;padding:12px}
+.card{background:var(--card);border:1px solid var(--ln);border-left:6px solid var(--y);border-radius:6px;padding:10px 12px;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.nm{flex:1;font-weight:700;word-break:break-all;cursor:pointer;padding:6px 0}.nm small{display:block;font-weight:400;color:var(--mu)}
+.ic button{background:none;border:1px solid var(--ln);color:var(--fg);border-radius:6px;padding:6px 10px;margin-left:4px;font-size:15px}
+.b{background:#1f2328;color:#f5c400;border:0;border-radius:6px;padding:12px 16px;font-weight:700;font-size:16px}.b.g{background:var(--card);color:var(--fg);border:1px solid var(--ln)}.b.w{display:block;width:100%;margin-top:8px}
+.def{background:var(--card);border:1px solid var(--ln);border-radius:6px;margin-bottom:14px;overflow:hidden}
+.dh{background:#1f2328;color:#f5c400;padding:8px 12px;display:flex;align-items:center;gap:8px}.dh b{flex:1}.dh button{background:none;border:1px solid #f5c400;color:#f5c400;border-radius:6px;padding:4px 10px}
+.def h3{font-size:14px;margin:10px 12px 4px;color:var(--mu)}
+.gr{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;padding:6px 12px 12px}
+.sl{border:1px solid var(--ln);border-radius:6px;min-height:120px;display:flex;flex-direction:column;overflow:hidden}
+.sl img{width:100%;height:90px;object-fit:cover;background:var(--ln)}
+.sl.add{align-items:center;justify-content:center;font-size:30px;border:2px dashed var(--ln);cursor:pointer}
+.st{font-size:12px;font-weight:700;padding:2px 6px}.st.C{color:var(--ok)}.st.N{color:var(--no)}
+.sl button{border:0;border-top:1px solid var(--ln);background:none;color:var(--fg);padding:6px}
+.ov{position:fixed;inset:0;background:#000a;display:flex;align-items:center;justify-content:center;padding:16px;z-index:20}
+.bx{background:var(--card);border-radius:10px;padding:18px;width:100%;max-width:380px}.bx p{margin-top:0;font-weight:700}
+.bx input{width:100%;padding:10px;font-size:16px;border:1px solid var(--ln);border-radius:6px;background:var(--bg);color:var(--fg)}
+.row{display:flex;gap:8px;margin-top:12px}.row .b{flex:1}
+.q{display:flex;align-items:center;gap:8px;margin-bottom:8px}.q span{flex:1}.q input{width:80px}
+.es{display:flex;gap:8px;padding:4px 12px 8px}.eb{flex:1;padding:14px 6px;border-radius:6px;font-weight:700;font-size:15px;border:0;color:#fff;opacity:.5}.eb.ok{background:#1a7f4b}.eb.no{background:#c62828}.eb.on{opacity:1;outline:3px solid var(--fg);outline-offset:1px}.ei{padding:0 12px 12px;font-size:14px;color:var(--mu)}
+.em{color:var(--mu);text-align:center;padding:30px 10px}
+</style></head><body>
+<header id="hd"></header><main id="app"></main><div id="modal"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])),uid=()=>Math.random().toString(36).slice(2,10),fn=s=>s.replace(/[\\/:*?"<>|]/g,'-');
+const CODES={R:{n:'Placa de Riesgo Eléctrico',d:[['4. J51B','Apoyo'],['4. J51C','Poste transformador'],['X.V32D','CT interior']]},N:{n:'Placa de Numeración',d:[['4. J61B','Apoyo'],['X.V31C','Poste transformador'],['X.V31D','CT interior']]}};
+const MAT={R:['PLACA R.E GRANDE','PLACA R.E. PEQUEÑA'],N:['PLACA NUMERACION']},NOC=['Ya está corregido en campo','Inaccesible','Inexistente','Ilocalizable'];
+let S;try{S=JSON.parse(localStorage.placas)}catch(_){}S=S||{lines:[]};let V={t:'lines'};
+const save=()=>localStorage.placas=JSON.stringify(S);
+const gl=i=>S.lines.find(x=>x.id==i),ge=()=>gl(V.l).eq.find(x=>x.id==V.e);
+const db=new Promise(r=>{const q=indexedDB.open('placas',1);q.onupgradeneeded=()=>q.result.createObjectStore('p');q.onsuccess=()=>r(q.result)});
+const idb=async(m,k,v)=>{const d=await db;return new Promise(r=>{const o=d.transaction('p',m=='get'?'readonly':'readwrite').objectStore('p');const q=m=='get'?o.get(k):m=='put'?o.put(v,k):o.delete(k);q.onsuccess=()=>r(q.result)})};
+const rmPh=async l=>{for(const x of l)await idb('del',x.id)};
+const dfPh=d=>[...d.a,...d.d],eqPh=e=>e.df.flatMap(dfPh);
+// ---- ventanas
+const close=()=>$('#modal').innerHTML='';
+function modal(h,w){const m=$('#modal');m.innerHTML=`<div class=ov><div class=bx>${h}</div></div>`;w(m)}
+const ask=msg=>new Promise(r=>modal(`<p>${msg}</p><div class=row><button class=b id=y>Sí</button><button class="b g" id=n>No</button></div>`,m=>{m.querySelector('#y').onclick=()=>{close();r(1)};m.querySelector('#n').onclick=()=>{close();r(0)}}));
+const txt=(t,v='')=>new Promise(r=>modal(`<p>${t}</p><input id=i value="${esc(v)}"><div class=row><button class=b id=y>Aceptar</button><button class="b g" id=n>Cancelar</button></div>`,m=>{const i=m.querySelector('#i');i.focus();m.querySelector('#y').onclick=()=>{close();r(i.value.trim()||null)};m.querySelector('#n').onclick=()=>{close();r(null)}}));
+const pick=(t,o)=>new Promise(r=>modal(`<p>${t}</p>`+o.map((x,i)=>`<button class="b w" data-i=${i}>${esc(x)}</button>`).join('')+`<button class="b g w" id=c>Cancelar</button>`,m=>{m.querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{close();r(o[b.dataset.i])});m.querySelector('#c').onclick=()=>{close();r(null)}}));
+const qty=o=>new Promise(r=>modal(`<p>Cantidad colocada</p>`+o.map(x=>`<div class=q><span>${x}</span><input type=number min=0 inputmode=numeric value=${o.length==1?1:0}></div>`).join('')+`<div class=row><button class=b id=y>Aceptar</button><button class="b g" id=n>Cancelar</button></div>`,m=>{m.querySelector('#y').onclick=()=>{const v=[...m.querySelectorAll('input')].map(i=>+i.value||0);close();r(v)};m.querySelector('#n').onclick=()=>{close();r(null)}}));
+// ---- fotos
+async function comp(f){const im=await createImageBitmap(f),k=Math.min(1,1600/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);return new Promise(r=>c.toBlob(r,'image/jpeg',.72))}
+async function estado(d,c){if(c=='C'){const o=MAT[d.t],v=await qty(o);if(!v)return;d.est='C';d.q={};o.forEach((k,i)=>d.q[k]=v[i]);delete d.m}else{const m=await pick('Motivo',NOC);if(!m)return;d.est='N';d.m=m;delete d.q}save()}
+const U={};async function thumbs(){for(const i of document.querySelectorAll('img[data-p]')){let u=U[i.dataset.p];if(!u){const b=await idb('get',i.dataset.p);if(b)u=U[i.dataset.p]=URL.createObjectURL(b)}if(u)i.src=u}}
+// ---- vistas
+const estBlock=d=>`<div class=es><button class="eb ok ${d.est=='C'?'on':''}" data-a=est data-i=${d.id} data-j=C>CORREGIDO</button><button class="eb no ${d.est=='N'?'on':''}" data-a=est data-i=${d.id} data-j=N>NO CORREGIDO</button></div>${d.est=='C'?`<div class=ei>${Object.entries(d.q||{}).filter(a=>a[1]).map(a=>a[0]+': '+a[1]).join(' · ')}</div>`:d.est=='N'?`<div class=ei>${esc(d.m||'')}</div>`:''}`;
+const slots=(d,k)=>{let h='';for(let i=0;i<4;i++){const x=d[k][i];h+=x?`<div class=sl><img data-p=${x.id}><button data-a=dp data-i=${d.id} data-j=${k} data-k=${i}>Borrar foto</button></div>`:`<label class="sl add">📷<input type=file accept="image/*" capture=environment hidden data-i=${d.id} data-j=${k}></label>`}return h};
+function render(){const h=$('#hd'),a=$('#app');
+ if(V.t=='lines'){h.innerHTML='<h1>PLACAS</h1>';
+  a.innerHTML=(S.lines.length?S.lines.map(l=>`<div class=card><div class=nm data-a=open data-i=${l.id}>${esc(l.name)}<small>${l.eq.length} equipos</small></div><div class=ic><button data-a=renL data-i=${l.id}>✎</button><button data-a=delL data-i=${l.id}>🗑</button></div></div>`).join(''):'<div class=em>Aún no hay líneas.</div>')+'<button class="b w" data-a=addL>+ Añadir línea</button>'}
+ else if(V.t=='line'){const l=gl(V.l);h.innerHTML=`<button data-a=back>‹</button><h1>${esc(l.name)}</h1><button data-a=exp>Exportar ZIP</button>`;
+  a.innerHTML=(l.eq.length?l.eq.map(e=>`<div class=card><div class=nm data-a=openE data-i=${e.id}>${esc(e.name)}<small>${e.df.length} defectos</small></div><div class=ic><button data-a=renE data-i=${e.id}>✎</button><button data-a=delE data-i=${e.id}>🗑</button></div></div>`).join(''):'<div class=em>Añade el primer equipo.</div>')+'<button class="b w" data-a=addE>+ Añadir equipo</button>'}
+ else{const e=ge();h.innerHTML=`<button data-a=back>‹</button><h1>${esc(e.name)}</h1>`;
+  a.innerHTML=(e.df.length?e.df.map(d=>`<div class=def><div class=dh><b>${esc(d.c)} · ${CODES[d.t].d.find(x=>x[0]==d.c)[1]}</b><span>${d.t=='R'?'Riesgo eléctrico':'Numeración'}</span><button data-a=delD data-i=${d.id}>🗑</button></div><h3>Fotos de antes</h3><div class=gr>${slots(d,'a')}</div><h3>Fotos de después</h3><div class=gr>${slots(d,'d')}</div>${estBlock(d)}</div>`).join(''):'<div class=em>Añade un defecto.</div>')+'<button class="b w" data-a=addD>+ Añadir defecto</button><button class="b g w" data-a=back>‹ Volver a la línea</button>'}
+ thumbs()}
+const fd=id=>ge().df.find(x=>x.id==id);
+const act={
+ async addL(){const n=await txt('Nombre de la línea');if(n){S.lines.push({id:uid(),name:n,eq:[]});save();render()}},
+ open(i){V={t:'line',l:i};render()},
+ async renL(i){const l=gl(i),n=await txt('Renombrar línea',l.name);if(n){l.name=n;save();render()}},
+ async delL(i){if(await ask('¿Eliminar la línea y todo su contenido?')&&await ask('¿Seguro? No se podrá recuperar.')){const l=gl(i);for(const e of l.eq)await rmPh(eqPh(e));S.lines=S.lines.filter(x=>x!=l);save();render()}},
+ back(){V=V.t=='eq'?{t:'line',l:V.l}:{t:'lines'};render()},
+ async addE(){const n=await txt('Código del equipo (ej. ARA-APY-L00603002-0015)');if(n){gl(V.l).eq.push({id:uid(),name:n,df:[]});save();render()}},
+ openE(i){V={t:'eq',l:V.l,e:i};render()},
+ async renE(i){const e=gl(V.l).eq.find(x=>x.id==i),n=await txt('Renombrar equipo',e.name);if(n){e.name=n;save();render()}},
+ async delE(i){if(await ask('¿Eliminar el equipo y sus fotos?')){const l=gl(V.l),e=l.eq.find(x=>x.id==i);await rmPh(eqPh(e));l.eq=l.eq.filter(x=>x!=e);save();render()}},
+ async addD(){const e=ge(),t=await pick('Tipo de placa',[CODES.R.n,CODES.N.n]);if(!t)return;const T=t==CODES.R.n?'R':'N',o=CODES[T].d.filter(x=>!e.df.some(d=>d.c==x[0])).map(x=>x[0]+' · '+x[1]);
+  if(!o.length)return pick('Ya has añadido todos los defectos de esta placa',['Aceptar']);const c=await pick('Defecto',o);if(c){e.df.push({id:uid(),t:T,c:c.split(' · ')[0],a:[],d:[]});save();render()}},
+ async delD(i){if(await ask('¿Eliminar el defecto y sus fotos?')){const e=ge(),d=fd(i);await rmPh(dfPh(d));e.df=e.df.filter(x=>x!=d);save();render()}},
+ async est(i,c){await estado(fd(i),c);render()},
+ async dp(i,k,n){if(await ask('¿Borrar esta foto?')){const d=fd(i),x=d[k][n];await idb('del',x.id);d[k].splice(n,1);save();render()}},
+ async exp(){const l=gl(V.l);modal('<p>Generando ZIP…</p>',()=>{});try{await expZip(l)}catch(e){alert('Error al exportar: '+e.message)}close()}};
+document.onclick=e=>{const b=e.target.closest('[data-a]');if(b)act[b.dataset.a](b.dataset.i,b.dataset.j,b.dataset.k)};
+document.onchange=async e=>{const i=e.target;if(i.type!='file'||!i.files[0])return;const d=fd(i.dataset.i),k=i.dataset.j,f=i.files[0];if(d[k].length>=4)return;
+ const x={id:uid()};await idb('put',x.id,await comp(f));d[k].push(x);save();render()};
+// ---- exportar
+async function expZip(l){const z=new JSZip(),root=z.folder(fn(l.name)),fo=root.folder('fotos');
+ const rec=[['Código Línea','Código Apoyo','PLACA R.E GRANDE','PLACA R.E. PEQUEÑA','PLACA NUMERACION','ECOINTEGRAL SOLUCIONADO (SI/NO/INACCESIBLE)','Defecto']],det=[['Código Línea','Código Apoyo','Defecto','Elemento','Foto','Momento','Estado','Detalle']],T=[0,0,0];
+ for(const e of l.eq){const ef=root.folder(fn(e.name));
+  for(const d of e.df){const q=d.est=='C'?(d.q||{}):{},g=q['PLACA R.E GRANDE']||0,p=q['PLACA R.E. PEQUEÑA']||0,n=q['PLACA NUMERACION']||0,
+    sol=d.est=='C'?'SI':d.est=='N'?(d.m=='Inaccesible'?'INACCESIBLE':d.m==NOC[0]?'SI':'NO'):'',
+    el=CODES[d.t].d.find(x=>x[0]==d.c)[1],es=d.est=='C'?'CORREGIDO':d.est=='N'?'NO CORREGIDO':'SIN ESTADO',dt=d.est=='C'?Object.entries(q).filter(a=>a[1]).map(a=>a[0]+': '+a[1]).join(', '):(d.m||''),
+    ph=[...d.a.map(x=>[x,'Antes']),...d.d.map(x=>[x,'Después'])];
+   for(let i=0;i<ph.length;i++){const[x,mo]=ph[i],nm=`${fn(e.name)}_${d.c}_${i+1}.jpg`,b=await idb('get',x.id);if(b){ef.file(nm,b);fo.file(nm,b)}det.push([l.name,e.name,d.c,el,nm,mo,es,dt])}
+   rec.push([l.name,e.name,g,p,n,sol,d.c]);T[0]+=g;T[1]+=p;T[2]+=n}}
+ rec.push(['TOTAL','',...T,'','']);
+ const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rec),'Recuento');XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(det),'Detalle');
+ root.file(`Recuento_${fn(l.name)}.xlsx`,XLSX.write(wb,{type:'array',bookType:'xlsx'}));
+ const bl=await z.generateAsync({type:'blob'}),a=document.createElement('a');a.href=URL.createObjectURL(bl);a.download=`${fn(l.name)}_${new Date().toISOString().slice(0,10)}.zip`;document.body.appendChild(a);a.click();a.remove()}
+navigator.storage&&navigator.storage.persist&&navigator.storage.persist();
+if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
+render();
+</script></body></html>
