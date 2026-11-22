@@ -31,6 +31,7 @@ main{max-width:720px;margin:0 auto;padding:12px}
 .row{display:flex;gap:8px;margin-top:12px}.row .b{flex:1}
 .q{display:flex;align-items:center;gap:8px;margin-bottom:8px}.q span{flex:1}.q input{width:80px}
 .es{display:flex;gap:8px;padding:4px 12px 8px}.eb{flex:1;padding:14px 6px;border-radius:6px;font-weight:700;font-size:15px;border:0;color:#fff;opacity:.5}.eb.ok{background:#1a7f4b}.eb.no{background:#c62828}.eb.on{opacity:1;outline:3px solid var(--fg);outline-offset:1px}.ei{padding:0 12px 12px;font-size:14px;color:var(--mu)}
+.q button{width:56px;height:56px;border-radius:50%;border:0;font-size:30px;font-weight:700;line-height:1}.q .pl{background:#1a7f4b;color:#fff}.q .mn{background:var(--ln);color:var(--fg);width:44px;height:44px;font-size:24px}.q b{min-width:34px;text-align:center;font-size:26px}
 .em{color:var(--mu);text-align:center;padding:30px 10px}
 </style></head><body>
 <header id="hd"></header><main id="app"></main><div id="modal"></div>
@@ -53,10 +54,10 @@ function modal(h,w){const m=$('#modal');m.innerHTML=`<div class=ov><div class=bx
 const ask=msg=>new Promise(r=>modal(`<p>${msg}</p><div class=row><button class=b id=y>Sí</button><button class="b g" id=n>No</button></div>`,m=>{m.querySelector('#y').onclick=()=>{close();r(1)};m.querySelector('#n').onclick=()=>{close();r(0)}}));
 const txt=(t,v='')=>new Promise(r=>modal(`<p>${t}</p><input id=i value="${esc(v)}"><div class=row><button class=b id=y>Aceptar</button><button class="b g" id=n>Cancelar</button></div>`,m=>{const i=m.querySelector('#i');i.focus();m.querySelector('#y').onclick=()=>{close();r(i.value.trim()||null)};m.querySelector('#n').onclick=()=>{close();r(null)}}));
 const pick=(t,o)=>new Promise(r=>modal(`<p>${t}</p>`+o.map((x,i)=>`<button class="b w" data-i=${i}>${esc(x)}</button>`).join('')+`<button class="b g w" id=c>Cancelar</button>`,m=>{m.querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{close();r(o[b.dataset.i])});m.querySelector('#c').onclick=()=>{close();r(null)}}));
-const qty=o=>new Promise(r=>modal(`<p>Cantidad colocada</p>`+o.map(x=>`<div class=q><span>${x}</span><input type=number min=0 inputmode=numeric value=${o.length==1?1:0}></div>`).join('')+`<div class=row><button class=b id=y>Aceptar</button><button class="b g" id=n>Cancelar</button></div>`,m=>{m.querySelector('#y').onclick=()=>{const v=[...m.querySelectorAll('input')].map(i=>+i.value||0);close();r(v)};m.querySelector('#n').onclick=()=>{close();r(null)}}));
+const qty=(o,p=[])=>new Promise(r=>modal(`<p>Cantidad colocada</p>`+o.map((x,i)=>`<div class=q><span>${x}</span><button class=mn data-i=${i} data-d=-1>−</button><b id=c${i}>${p[i]||0}</b><button class=pl data-i=${i} data-d=1>+</button></div>`).join('')+`<div class=row><button class=b id=y>Aceptar</button><button class="b g" id=n>Cancelar</button></div>`,m=>{const v=o.map((_,i)=>p[i]||0);m.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{const i=+b.dataset.i;v[i]=Math.max(0,v[i]+(+b.dataset.d));m.querySelector('#c'+i).textContent=v[i]});m.querySelector('#y').onclick=()=>{close();r(v)};m.querySelector('#n').onclick=()=>{close();r(null)}}));
 // ---- fotos
 async function comp(f){const im=await createImageBitmap(f),k=Math.min(1,1600/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);return new Promise(r=>c.toBlob(r,'image/jpeg',.72))}
-async function estado(d,c){if(c=='C'){const o=MAT[d.t],v=await qty(o);if(!v)return;d.est='C';d.q={};o.forEach((k,i)=>d.q[k]=v[i]);delete d.m}else{const m=await pick('Motivo',NOC);if(!m)return;d.est='N';d.m=m;delete d.q}save()}
+async function estado(d,c){if(c=='C'){const o=MAT[d.t],v=await qty(o,o.map(k=>(d.q&&d.q[k])||0));if(!v)return;d.est='C';d.q={};o.forEach((k,i)=>d.q[k]=v[i]);delete d.m}else{const m=await pick('Motivo',NOC);if(!m)return;d.est='N';d.m=m;delete d.q}save()}
 const U={};async function thumbs(){for(const i of document.querySelectorAll('img[data-p]')){let u=U[i.dataset.p];if(!u){const b=await idb('get',i.dataset.p);if(b)u=U[i.dataset.p]=URL.createObjectURL(b)}if(u)i.src=u}}
 // ---- vistas
 const estBlock=d=>`<div class=es><button class="eb ok ${d.est=='C'?'on':''}" data-a=est data-i=${d.id} data-j=C>CORREGIDO</button><button class="eb no ${d.est=='N'?'on':''}" data-a=est data-i=${d.id} data-j=N>NO CORREGIDO</button></div>${d.est=='C'?`<div class=ei>${Object.entries(d.q||{}).filter(a=>a[1]).map(a=>a[0]+': '+a[1]).join(' · ')}</div>`:d.est=='N'?`<div class=ei>${esc(d.m||'')}</div>`:''}`;
@@ -94,7 +95,7 @@ async function expZip(l){const z=new JSZip(),root=z.folder(fn(l.name)),fo=root.f
  const rec=[['Código Línea','Código Apoyo','PLACA R.E GRANDE','PLACA R.E. PEQUEÑA','PLACA NUMERACION','ECOINTEGRAL SOLUCIONADO (SI/NO/INACCESIBLE)','Defecto']],det=[['Código Línea','Código Apoyo','Defecto','Elemento','Foto','Momento','Estado','Detalle']],T=[0,0,0];
  for(const e of l.eq){const ef=root.folder(fn(e.name));
   for(const d of e.df){const q=d.est=='C'?(d.q||{}):{},g=q['PLACA R.E GRANDE']||0,p=q['PLACA R.E. PEQUEÑA']||0,n=q['PLACA NUMERACION']||0,
-    sol=d.est=='C'?'SI':d.est=='N'?(d.m=='Inaccesible'?'INACCESIBLE':d.m==NOC[0]?'SI':'NO'):'',
+    sol=d.est=='C'?'SI':d.est=='N'?'NO, '+(d.m||''):'',
     el=CODES[d.t].d.find(x=>x[0]==d.c)[1],es=d.est=='C'?'CORREGIDO':d.est=='N'?'NO CORREGIDO':'SIN ESTADO',dt=d.est=='C'?Object.entries(q).filter(a=>a[1]).map(a=>a[0]+': '+a[1]).join(', '):(d.m||''),
     ph=[...d.a.map(x=>[x,'Antes']),...d.d.map(x=>[x,'Después'])];
    for(let i=0;i<ph.length;i++){const[x,mo]=ph[i],nm=`${fn(e.name)}_${d.c}_${i+1}.jpg`,b=await idb('get',x.id);if(b){ef.file(nm,b);fo.file(nm,b)}det.push([l.name,e.name,d.c,el,nm,mo,es,dt])}
